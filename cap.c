@@ -53,6 +53,7 @@ int cap_derive(int pid, int i, uint8_t fuel, uint32_t base, uint32_t size,
     ctable[j].max_fuel = fuel;
     ctable[j].base = base;
     ctable[j].size = size;
+    ctable[j].rwx = rwx;
 
     // Return index of new capability.
     return j;
