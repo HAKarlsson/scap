@@ -17,26 +17,25 @@ cap_t ctable[64] = {
 
 int cap_derive(int pid, int i, uint8_t fuel, uint32_t base, uint32_t size, uint8_t rwx)
 {
-	cap_t *cap = &ctable[i];
-
 	// Check capability index
 	if (i < 0 || i >= ARRAY_SIZE(ctable))
 		return -1;
 	// Check owner
-	if (cap->pid != pid)
+	if (ctable[i].pid != pid)
 		return -1;
 	// Check if sufficient fuel
-	if (cap->fuel < fuel)
+	if (ctable[i].fuel < fuel)
 		return -1;
 	// Check if out of bounds
-	if ((base < cap->base) || (base + size > cap->base + cap->size))
+	if ((base < ctable[i].base) 
+	   || (base + size > ctable[i].base + ctable[i].size))
 		return -1;
 	// Check RWX permissions. 
-	if ((cap->rwx & rwx) != rwx)
+	if ((ctable[i].rwx & rwx) != rwx)
 		return -1;
 
 	// Index of new capability.
-	int j = i + cap->fuel - fuel;
+	int j = i + ctable[i].fuel - fuel;
 
 	// Create new capability.
 	ctable[j].pid = ctable[i].pid;
@@ -45,45 +44,44 @@ int cap_derive(int pid, int i, uint8_t fuel, uint32_t base, uint32_t size, uint8
 	ctable[j].base = base;
 	ctable[j].size = size;
 
+	// Reduce fuel of original capability
+	ctable[i].fuel -= fuel;
+
 	// Return index of new capability.
 	return j;
 }
 
 int cap_revoke(int pid, int i)
 {
-	cap_t *cap = &ctable[i];
-
 	// Check capability index.
 	if (i < 0 || i >= ARRAY_SIZE(ctable))
 		return -1;
 
 	// Check owner.
-	if (cap->pid != pid)
+	if (ctable[i].pid != pid)
 		return -1;
 
 	// Invalidate child capabilities.
-	for (int j = cap->fuel; j < cap->max_fuel; ++j)
+	for (int j = ctable[i].fuel; j < ctable[i].max_fuel; ++j)
 		ctable[i + j].pid = -1;
 
 	// Restore fuel.
-	cap->fuel = cap->max_fuel;
+	ctable[i].fuel = ctable[i].max_fuel;
 
 	return i;
 }
 
 int cap_delete(int pid, int i)
 {
-	cap_t *cap = &ctable[i];
-
 	// Check capability index.
 	if (i >= ARRAY_SIZE(ctable))
 		return -1;
 	// Check owner.
-	if (cap->pid != pid)
+	if (ctable[i].pid != pid)
 		return -1;
 
 	// Invalidate capability.
-	cap->pid = -1;
+	ctable[i].pid = -1;
 
 	return i;
 }
