@@ -1,17 +1,7 @@
 #include "cap.h"
 #include <stdint.h>
 
-/**
- * Basic memory capability
- */
-typedef struct {
-	int8_t pid;
-	uint8_t fuel;
-	uint8_t max_fuel;
-	uint8_t rwx;
-	uint32_t base;
-	uint32_t size;
-} cap_t;
+#define ARRAY_SIZE(_x) (sizeof(_x)/sizeof(_x[0]))
 
 // Capability table
 cap_t ctable[64] = {
@@ -59,7 +49,7 @@ int cap_derive(int pid, int i, uint8_t fuel, uint32_t base, uint32_t size, uint8
 	return j;
 }
 
-void cap_revoke(int pid, int i)
+int cap_revoke(int pid, int i)
 {
 	cap_t *cap = &ctable[i];
 
@@ -77,9 +67,11 @@ void cap_revoke(int pid, int i)
 
 	// Restore fuel.
 	cap->fuel = cap->max_fuel;
+
+	return i;
 }
 
-void cap_delete(int pid, int i)
+int cap_delete(int pid, int i)
 {
 	cap_t *cap = &ctable[i];
 
@@ -92,4 +84,6 @@ void cap_delete(int pid, int i)
 
 	// Invalidate capability.
 	cap->pid = -1;
+
+	return i;
 }
